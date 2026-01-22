@@ -61,6 +61,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
       print('Calling inside the app and checking deferred deep link');
       if (Platform.isAndroid) {
+        /**
+         * Needed for tracking for android
+         * <uses-permission android:name="android.permission.INTERNET" />
+         * final info = await SmlerDeferredLink.getInstallReferrerAndroid();
+         * if(info.getParam('clickId').isNotEmpty) {
+         *  final apiRes = await info.trackClick();
+         *  Take any action based on apiRes if needed. This is optional.
+         * }
+         */
+
         final info = await SmlerDeferredLink.getInstallReferrerAndroid();
         params = info.asQueryParameters;
         final pathParams = info.extractShortCodeAndDltHeader();
@@ -68,13 +78,20 @@ class _MyHomePageState extends State<MyHomePage> {
         final clickId = info.getParam('clickId');
         print('Android Referrer Params: $params Click Id: $clickId');
         print('Path Params: $pathParams');
-        if(clickId.isEmpty == false) {
+        if(clickId.isNotEmpty) {
           final apiRes = await info.trackClick();
           print('API Response: $apiRes');
           apiResponse = apiRes;
         }
         status = "Android Referrer Loaded";
       } else if (Platform.isIOS) {
+        /**
+         * On IOS, deep links details are copied to clipboard by the OS
+         * When the app is opened for the first time after installation.
+         * We would extract the deep link from clipboard.
+         * 
+         * 
+         */
         final res = await SmlerDeferredLink.getInstallReferrerIos(
           deepLinks: ["go.singh3y.dev"],
         );
@@ -83,7 +100,9 @@ class _MyHomePageState extends State<MyHomePage> {
           final clickId = res.getParam('clickId');
           print('iOS Deep Link Params: $params and Click Id: $clickId');
           status = "iOS Clipboard Deep Link Loaded";
-          res.trackClick();
+          if (clickId!.isNotEmpty) {
+            await res.trackClick();
+          }
         } else {
           print('No deep link found');
           status = "No deep link found";
